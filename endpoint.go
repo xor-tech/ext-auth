@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -27,8 +28,10 @@ func (e *SimpleEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		server.HandleErrorResponse(ctx, w, err)
 		return
 	}
+	var masterToken string
+	masterToken = strings.Split(r.Header.Get("Authorization"), " ")[1]
 
-	user, created, err := e.authenticate(ctx, &login)
+	user, created, err := e.authenticate(ctx, &login, masterToken)
 	if err != nil {
 		server.WriteError(ctx, w, http.StatusUnauthorized, err)
 		return
@@ -53,7 +56,7 @@ func (e *SimpleEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(LoginResponse{Token: tokenString, Msg: msg})
 }
 
-func (e *SimpleEndpoint) authenticate(ctx context.Context, login *Login) (*User, bool, error) {
+func (e *SimpleEndpoint) authenticate(ctx context.Context, login *Login, masterToken string) (*User, bool, error) {
 	user, err := e.simple.findUser(ctx, login.Username, login.Password)
 	if err != nil {
 		return nil, false, err
@@ -66,7 +69,11 @@ func (e *SimpleEndpoint) authenticate(ctx context.Context, login *Login) (*User,
 		}
 		return user, false, nil
 	}
-	// Since this is dumb, we'll just automatically create a user and return a token if user doesn't already exist.
+	// Since this is dumb, we'll just automatically create a user and return a token if user doesn't already exist and the master token is corrent.
+	if masterToken != os.Getenv(EnvMasterToken) {
+		fmt.Errorf("Master token mismatch.")
+		return nil, false, fmt.Errorf("Authentication Failed")
+	}
 	user, err = e.simple.createUser(ctx, login.Username, login.Password)
 	if err != nil {
 		return nil, false, err

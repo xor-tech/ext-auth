@@ -17,7 +17,11 @@ Try running the following commands to try it out:
 curl http://localhost:8080/v1/apps
 # Fails... :(
 
-# Login: this will create a user if one doesn't exist
+#Create new user with master token
+curl -H "Content-Type: application/json"  -H "Authorization: Bearer MASTER_TOKEN" -X POST -d '{"username":"johnny","password":"xyz"}' http://localhost:8080/v1/login
+
+
+# Login:
 curl -H "Content-Type: application/json" -X POST -d '{"username":"johnny","password":"xyz"}' http://localhost:8080/v1/login
 
 # deploy a function
