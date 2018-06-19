@@ -19,7 +19,8 @@ func init() {
 }
 
 const (
-	EnvSecret = "SIMPLE_SECRET"
+	EnvSecret      = "SIMPLE_SECRET"
+	EnvMasterToken = "MASTER_TOKEN"
 )
 
 type SimpleAuth struct {
@@ -32,7 +33,7 @@ type SimpleAuth struct {
 }
 
 func (e *SimpleAuth) Name() string {
-	return "github.com/fnproject/ext-auth"
+	return "github.com/banzaicloud/ext-auth"
 }
 
 func (e *SimpleAuth) Setup(s fnext.ExtServer) error {
@@ -40,6 +41,11 @@ func (e *SimpleAuth) Setup(s fnext.ExtServer) error {
 	if os.Getenv(EnvSecret) == "" {
 		return fmt.Errorf("%s env var is required for simple auth extension", EnvSecret)
 	}
+
+	if os.Getenv(EnvMasterToken) == "" {
+		return fmt.Errorf("%s env var is required for simple auth extension", EnvMasterToken)
+	}
+
 	// setup database for auth
 	simple := &SimpleAuth{
 		ds: s.Datastore(),
